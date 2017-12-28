@@ -135,6 +135,9 @@ def OutOfDate(CurrentVersionString, LatestVersionString):
         nagios_exit('Unknown', message)
 
     try:
+        # if the length of the string is 0 then it can't be a proper version number.
+        if len(LatestVersionString) == 0:
+             raise
         LatestVersionString = str(LatestVersionString)
         LatestVersionString = LatestVersionString.replace('rc', 'b')
         LatestVersion = StrictVersion(LatestVersionString)
