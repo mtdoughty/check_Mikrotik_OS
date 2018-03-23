@@ -5,6 +5,7 @@ import argparse
 import sys
 import datetime
 import urllib.request
+import ssl
 from distutils.version import StrictVersion
 
 #MIKROTIK-MIB::
@@ -15,6 +16,8 @@ OID_CurrentFirmwareVersion = '.1.3.6.1.4.1.14988.1.1.7.4.0'  # Current RouterOS 
 #MIKROTIK-MIB::mtxrFirmwareUpgradeVersion.0
 OID_LatestFirmwareVersion = '.1.3.6.1.4.1.14988.1.1.7.7.0'  # Latest availble RouterOS Firmware Version
 
+baseURLS = {"https://download.mikrotik.com/", "https://upgrade.mikrotik.com/" }
+debug = False;
 
 def nagios_exit(overallStatus, message):
 
@@ -42,24 +45,29 @@ except:
 
 def getLatestMikrotik(ReleaseChannel):
 
+    error = ""
+
+    for EachBaseURL in baseURLS:
+
         # Get the lasest Version number from the Mikrotik website based on the
         # supplied release channel.
 
         # Define URLS.  (Note that only RouterOS V6 is currently supported.
-        currentURL = "https://upgrade.mikrotik.com/routeros/LATEST.6"
-        bugFixOnlyURL = "https://upgrade.mikrotik.com/routeros/LATEST.6fix"
-        RCURL = "https://upgrade.mikrotik.com/routeros/LATEST.6rc"
+        currentURL = "routeros/LATEST.6"
+        bugFixOnlyURL = "routeros/LATEST.6fix"
+        RCURL = "routeros/LATEST.6rc"
 
         if ReleaseChannel == "Current":
-            URL = currentURL
+            URL = EachBaseURL + currentURL
         elif ReleaseChannel == "Bugfix":
-            URL = bugFixOnlyURL
+            URL = EachBaseURL + bugFixOnlyURL
         elif ReleaseChannel == "ReleaseCandidate":
-            URL = RCURL
+            URL = EachBaseURL + RCURL
         else:
             nagios_exit("Unknown", "Unknown Mikrotik Release Channel")
 
         try:
+
             with urllib.request.urlopen(URL) as response:
                 ReturnedString = response.read()
 
@@ -68,10 +76,21 @@ def getLatestMikrotik(ReleaseChannel):
             lastestVersion = ReturnedString[0]
             ReleaseDate = ReturnedString[1]
             return lastestVersion, ReleaseDate
-        except:
+        except ssl.CertificateError as e:
+            debugMessage(URL)
+            error =  e
+            debugMessage(e)
 
+        except Exception as e:
+            debugMessage(e.__class__)
+            debugMessage(e)
             nagios_exit("Unknown", "Could not retrive latest RouterOS version from Mikrotik Website")
 
+    nagios_exit("Unknown", "Could not retrive latest RouterOS version from Mikrotik Website:" + str(error))
+
+def debugMessage(message):
+    if debug == True:
+        print ("debug: " + str(message))
 
 def getSNMP_OID(IPAddress, Version, SNMPOptions, OID):
 
