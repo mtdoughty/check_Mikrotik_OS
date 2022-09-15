@@ -10,6 +10,7 @@ This Nagios plug-in uses python 3 with the following module dependencies:
 
 1. argparse
 2. pysnmp
+3. packaging
 
 SNMP must be enabled on the routerboard device to allow read access from the Nagios host.  
 
