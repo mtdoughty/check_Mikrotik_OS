@@ -6,7 +6,7 @@ import sys
 import datetime
 import urllib.request
 import ssl
-from distutils.version import StrictVersion
+from packaging.version import Version, parse
 
 #MIKROTIK-MIB::
 #MIKROTIK-MIB::mtxrLicVersion.0
@@ -147,7 +147,7 @@ def OutOfDate(CurrentVersionString, LatestVersionString):
     try:
         CurrentVersionString = str(CurrentVersionString)
         CurrentVersionString = CurrentVersionString.replace('rc', 'b')
-        CurrentVersion = StrictVersion(str(CurrentVersionString))
+        CurrentVersion = Version(str(CurrentVersionString))
 
     except:
         message = "Don't know how to handle current version number"
@@ -159,7 +159,7 @@ def OutOfDate(CurrentVersionString, LatestVersionString):
              raise
         LatestVersionString = str(LatestVersionString)
         LatestVersionString = LatestVersionString.replace('rc', 'b')
-        LatestVersion = StrictVersion(LatestVersionString)
+        LatestVersion = Version(LatestVersionString)
     except:
         message = "Don't know how to handle latest number"
         nagios_exit('Unknown', message)
@@ -174,11 +174,11 @@ def statusCheck(currentStatus, NewStatus):
 
     # Function to take two Nagios status and return the worst case.
 
-    if currentStatus is 'Critical' or NewStatus is 'Critical':
+    if currentStatus == 'Critical' or NewStatus == 'Critical':
         return 'Critical'
-    elif currentStatus is 'Warning' or NewStatus is 'Warning':
+    elif currentStatus == 'Warning' or NewStatus == 'Warning':
         return 'Warning'
-    elif  currentStatus is 'Unknown' or NewStatus is 'Unknown':
+    elif  currentStatus == 'Unknown' or NewStatus == 'Unknown':
         return 'Unknown'
     else:
         return 'Ok'
@@ -226,7 +226,7 @@ def main():
     if overallStatus == "Ok":
         message = "RouterOS and Firmware is up to date" + " (" + CurrentRouterOsVerion + "/" \
                    + CurrentFirmwareVersion + ")."
-        nagios_exit("Ok", message)
+        nagios_exit("OK", message)
     else:
         nagios_exit(overallStatus, RouterOSMessage + " " + firmwareMessage)
 
